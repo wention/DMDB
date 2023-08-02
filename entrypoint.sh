@@ -49,7 +49,12 @@ EOF` | grep  "connection failure" > /dev/null 2>&1
 start_service() {
   if [ ! -d "/opt/dmdbms/data/DAMENG" ]; then
     cd /opt/dmdbms/bin
-    ./dminit PATH=/opt/dmdbms/data PAGE_SIZE=${PAGE_SIZE} CASE_SENSITIVE=${CASE_SENSITIVE} UNICODE_FLAG=${UNICODE_FLAG} LENGTH_IN_CHAR=${LENGTH_IN_CHAR} SYSDBA_PWD=${ADMIN_PWD}
+    OPTS="PAGE_SIZE=${PAGE_SIZE} CASE_SENSITIVE=${CASE_SENSITIVE} UNICODE_FLAG=${UNICODE_FLAG} LENGTH_IN_CHAR=${LENGTH_IN_CHAR}"
+    if [ $ADMIN_PWD != "SYSDBA" ] && [ -n $ADMIN_PWD ];then
+      OPTS="$OPT SYSDBA_PWD=${ADMIN_PWD}"
+    fi
+    echo "init DM with opts: $OPTS"
+    ./dminit PATH=/opt/dmdbms/data
     echo "Init DM success!"
   fi
 
