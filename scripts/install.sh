@@ -18,7 +18,6 @@ TPLFILES="
   /opt/dmdbms/bin/DmInstanceMonitorService
   /opt/dmdbms/bin/DmJobMonitorService
   /opt/dmdbms/bin/DmAPService
-  /opt/dmdbms/tool/log4j.xml
 "
 
 for tpl in ${TPLFILES};do

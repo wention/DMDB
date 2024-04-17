@@ -2,22 +2,15 @@
 
 set -e
 
-PAGE_SIZE=32
-CASE_SENSITIVE=1
-UNICODE_FLAG=0
-LENGTH_IN_CHAR=0
-
-ADMIN_PWD=${ADMIN_PWD}
 CONN_PWD=\"${ADMIN_PWD}\"
-export LANG=en_US.UTF-8
 
 wait_dm_running() {
   for i in `seq 1  10`
   do
     if [ ! -f "/opt/dmdbms/conf/dm.ini" ]; then
-       pid=`ps -eo pid,args | grep -F "./dmserver /opt/dmdbms/data/DAMENG/dm.ini" | grep -v "grep" | tail -1 | awk '{print $1}'`
+       pid=`ps -eo pid,args | grep -F "dmserver /opt/dmdbms/data/${DB_NAME}/dm.ini" | grep -v "grep" | tail -1 | awk '{print $1}'`
     else
-       pid=`ps -eo pid,args | grep -F "./dmserver /opt/dmdbms/conf/dm.ini" | grep -v "grep" | tail -1 | awk '{print $1}'`
+       pid=`ps -eo pid,args | grep -F "dmserver /opt/dmdbms/conf/dm.ini" | grep -v "grep" | tail -1 | awk '{print $1}'`
     fi
     if [ "$pid" != "" ]; then
       echo "Dmserver is running."
@@ -32,7 +25,7 @@ wait_dm_running() {
 wait_dm_ready() {
   for i in `seq 1  10`
   do
-    echo `./disql /nolog <<EOF
+    echo `disql /nolog <<EOF
 CONN SYSDBA/${CONN_PWD}@localhost
 exit
 EOF` | grep  "connection failure" > /dev/null 2>&1
@@ -47,36 +40,29 @@ EOF` | grep  "connection failure" > /dev/null 2>&1
 }
 
 start_service() {
-  if [ ! -d "/opt/dmdbms/data/DAMENG" ]; then
-    cd /opt/dmdbms/bin
-    OPTS="PAGE_SIZE=${PAGE_SIZE} CASE_SENSITIVE=${CASE_SENSITIVE} UNICODE_FLAG=${UNICODE_FLAG} LENGTH_IN_CHAR=${LENGTH_IN_CHAR}"
+  if [ ! -d "/opt/dmdbms/data/${DB_NAME}" ]; then
+    OPTS="PAGE_SIZE=${PAGE_SIZE} CASE_SENSITIVE=${CASE_SENSITIVE} UNICODE_FLAG=${UNICODE_FLAG} LENGTH_IN_CHAR=${LENGTH_IN_CHAR} DB_NAME=${DB_NAME} INSTANCE_NAME=${INSTANCE_NAME} CHARSET=${CHARSET}"
     if [ $ADMIN_PWD != "SYSDBA" ] && [ -n $ADMIN_PWD ];then
-      OPTS="$OPT SYSDBA_PWD=${ADMIN_PWD}"
+      OPTS="$OPTS SYSDBA_PWD=${ADMIN_PWD}"
     fi
     echo "init DM with opts: $OPTS"
-    ./dminit PATH=/opt/dmdbms/data
+    dminit PATH=/opt/dmdbms/data $OPTS
     echo "Init DM success!"
+    echo "default account: SYSDBA/${ADMIN_PWD}"
   fi
 
-  cd /opt/dmdbms/bin
-
   echo "Start DmAPService..."
-  ./DmAPService start
+  DmAPService start
 
   echo "Start DMSERVER success!"
 
   if [ ! -f "/opt/dmdbms/conf/dm.ini" ]; then
     echo "/opt/dmdbms/conf/dm.ini does not exist, use default dm.ini"
-    #./dmserver /opt/dmdbms/data/DAMENG/dm.ini -noconsole > /opt/dmdbms/log/DmServiceDMSERVER.log 2>&1 &
-    ./dmserver /opt/dmdbms/data/DAMENG/dm.ini
+    dmserver /opt/dmdbms/data/${DB_NAME}/dm.ini
   else
-    #./dmserver /opt/dmdbms/conf/dm.ini -noconsole > /opt/dmdbms/log/DmServiceDMSERVER.log 2>&1 &
-    ./dmserver /opt/dmdbms/conf/dm.ini
+    dmserver /opt/dmdbms/conf/dm.ini
   fi
 }
-
-DM_HOME=/opt/dmdbms
-PATH=$DM_HOME/bin:$PATH
 
 if [ "${1}" = "serve" ]; then
   start_service
