@@ -20,9 +20,10 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 
 ADD DMInstall/source/bin /opt/dmdbms/bin
-ADD DMInstall/source/bin2 /opt/dmdbms/bin2
 
 ADD --chmod=0755 scripts /scripts
+
+RUN ldconfig /opt/dmdbms/bin
 
 RUN /scripts/install.sh
 

@@ -23,6 +23,8 @@ ADD DMInstall/source /opt/dmdbms
 
 ADD --chmod=0755 scripts /scripts
 
+RUN ldconfig /opt/dmdbms/bin
+
 RUN /scripts/install.sh
 
 ADD --chmod=0755 entrypoint.sh /
